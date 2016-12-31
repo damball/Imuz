@@ -1,0 +1,108 @@
+using System;
+
+using Zmp.Imuz.Communication;
+
+namespace Zmp.Imuz.Sample.SimpleCommunicationSample
+{
+    // BluetoothかCAN(USB)接続されたIMU-Zの計測データを
+    // コンソールに表示する最もシンプルなプログラムです。
+    class Program
+	{
+
+		static void Main(string[] args)
+		{
+			// お使いの環境に合わせてCOMポートを変更してください。
+			const string ImuzCommPortName = "COM4";
+			const PortType portType = PortType.Bluetooth;
+			//const PortType portType = PortType.Can;
+
+
+			// ポートを指定して ポートオブジェクトを生成します。
+			//
+			// CreateCommunicationPortでは、実際にシステムにポートが存在するか、また、
+			// 開けるかどうかにかかわらず、ポートオブジェクトを生成します。
+			ICommunicationPort port = CommunicationManager.CreateCommunicationPort(ImuzCommPortName, portType);
+
+			// ポートを開きます。
+			if (port.Open())
+			{
+				// 成功したら、計測データ受信イベントのハンドラを登録します。
+				port.MsgMeasurementReceived += onMsgMeasurement;
+
+			} else {
+				// 失敗したらメッセージを出力します。
+				// 失敗の原因は様々ですが、指定したCOMが存在するか確認してください。
+				Console.WriteLine("Can not open the port. {0}", ImuzCommPortName);
+			}
+
+			// キーボードから'q'(Enter)を入力するとアプリケーションを終了します。
+			string str;
+			do
+			{
+				str = Console.In.ReadLine();
+			} while (!(str.Length > 0 && str[0] == 'q'));
+
+			// 通信を切断して、ポートを閉じます。
+			port.Close();
+		}
+
+		// 計測データ受信イベントのハンドラです。
+		// IMU-Zからデータを受信するごとに呼ばれます。
+		//
+		// MeasurementDataの中にすべてのデータが入っているので、
+		// アプリケーションから自由に使えます。
+
+		// Openには成功するが、データ受信のメッセージが表示されない場合、
+		// 指定したCOMポートが、IMU-Zに接続されている正しいBluetoothポートかどうか
+		// 確認してください。
+		static void onMsgMeasurement(object sender, MeasurementData mess)
+		{
+            // ノード番号、タイムスタンプそして、加速度、ジャイロ、地磁気が3軸ずつ
+            // それぞれX,Y,Z軸の並びで入っています。
+            int x;
+            int y;
+            int z;
+            if (mess.gyro[0] < 0)
+            { x = -1; }
+            else
+            { x = 1; }
+            if (mess.gyro[1] < 0)
+            { y = -1; }
+            else
+            { y = 1; }
+            if (mess.gyro[2] < 0)
+            { z = -1; }
+            else
+            { z = 1; }
+            Console.WriteLine(" ({0},{1},{2})",
+                x, y, z);
+			
+				
+		}
+        public static void send(string keys);
+        private void receivedDataProcessing(String recieveData)
+        {
+            recieveData = recieveData.Replace("\r", "");
+            recieveData = recieveData.Replace("\n", "");
+
+            switch (recieveData)
+            {
+                case "W":
+                    SendKeys.Send("w");
+                    break;
+                case "A":
+                    SendKeys.Send("a");
+                    break;
+                case "S":
+                    SendKeys.Send("s");
+                    break;
+                case "D":
+                    SendKeys.Send("d");
+                    break;
+                case "Space":
+                    SendKeys.Send(" ");
+                    break;
+            }
+        }
+    }
+}
